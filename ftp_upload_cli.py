@@ -1,5 +1,4 @@
 import os
-import time
 
 import fire
 import git
@@ -8,36 +7,41 @@ root = 'covid19cubadataactions'
 upload_root = root + '/api'
 entries = []
 ftp_dir = '/htdocs/covid/'
-start_ftp = 'lftp -u {user},{password} -e "set ssl:verify-certificate false;'
-end_ftp = 'exit;" {host}'
+ftp_command = 'lftp -u {user},{password} -e "set ssl:verify-certificate false;{command}exit;" {host}'
+
+
+class LeaveMissing(dict):
+    def __missing__(self, key):
+        return '{' + key + '}'
 
 
 def mkdir(folder):
     return 'cd ' + ftp_dir + folder + ' || mkdir -p ' + ftp_dir + folder + ';cd ' + ftp_dir + folder + ';'
 
 
-def walk_upload(folder, pause=False):
-    if pause:
-        time.sleep(1)
-    items = os.listdir(folder)
-    for i in range(0, len(items)):
-        entry = folder + '/' + items[i]
-        if os.path.isdir(entry):
-            entries.append(folder + '/' + items[i])
+def walk_upload(folder):
+    if not os.path.isdir(folder):
+        return
 
+    entries.append(folder)
     while len(entries):
         entry = entries.pop()
-        print("Adding", str(entry).replace('covid19cubadataactions/', ''))
-        command = start_ftp + mkdir(str(entry).replace('covid19cubadataactions/', '')) + 'mput -P 2 ' + entry + '/*;' + end_ftp
-        os.system(command)
-        print("Uploaded", str(entry).replace('covid19cubadataactions/', ''))
+        temp = str(entry).replace('covid19cubadataactions/', '')
+        print("Processing", temp)
+        command = ftp_command.format(command=mkdir(temp) + 'mput -P 2 ' + entry + '/*;')
+        # os.system(command)
+        print("Uploaded", temp)
         if os.path.isdir(entry):
-            walk_upload(entry, True)
+            items = os.listdir(entry)
+            for item in items:
+                item = entry + '/' + item
+                if os.path.isdir(item):
+                    entries.append(item)
 
 
 def run_update(host, user, password):
-    global start_ftp
-    start_ftp = start_ftp.format(user=user, password=password, host=host)
+    global ftp_command
+    ftp_command = ftp_command.format_map(LeaveMissing(user=user, password=password, host=host))
 
     last_commit = None
     if os.path.isfile('last_commit'):
