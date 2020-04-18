@@ -1,4 +1,5 @@
 import os
+import re
 
 import fire
 import git
@@ -20,20 +21,16 @@ class LeaveMissing(dict):
 
 
 def get_last_commit():
-    # this is for avoid clonning if is up to date
     r = git.Repo.init('temp_repo')
     r.create_remote('origin', repo_url)
-    res = r.git.ls_remote(repo_url)
-    res = res.split('\n')
-    last_commit = ''
-    for i in res:
-        i = i.split('\t')
-        if branch in i[1]:
-            last_commit = branch[0]
-            break
+    res = str(r.git.ls_remote(repo_url)).replace('\t', ' ')
     r.close()
     os.system('rm -rf temp_repo')
-    return last_commit
+    regex = '(?P<commit>[a-z0-9]+) ' + re.escape("refs/heads/" + branch)
+    matchObj = re.search(regex, res)
+    if matchObj:
+        return matchObj.group('commit')
+    return None
 
 
 def mkdir(folder):
