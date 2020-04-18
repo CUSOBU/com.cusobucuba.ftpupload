@@ -5,8 +5,7 @@ from fs.walk import Walker
 import fire
 import git
 
-repo_url = 'http://pi.me.home:3000/fsadannn/covid19cubadata.github.io.git'
-#repo_url = 'https://github.com/covid19cuba/covid19cubadata.github.io.git'
+repo_url = 'https://github.com/covid19cuba/covid19cubadata.github.io.git'
 root = 'covid19cubadataactions'
 upload_root = '/api'
 ftp_dir = '/htdocs/covid/'
