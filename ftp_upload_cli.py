@@ -28,8 +28,7 @@ def walk_upload(folder):
         entry = entries.pop()
         temp = str(entry).replace('covid19cubadataactions/', '')
         print("Processing", temp)
-        command = ftp_command.format(command=mkdir(temp) + 'mput -P 2 ' + entry + '/*;')
-        # os.system(command)
+        os.system(ftp_command.format(command=mkdir(temp) + 'mput -P 2 ' + entry + '/*;'))
         print("Uploaded", temp)
         if os.path.isdir(entry):
             items = os.listdir(entry)
