@@ -1,2 +1,4 @@
 /.idea/
 /last_commit
+api/
+.env
