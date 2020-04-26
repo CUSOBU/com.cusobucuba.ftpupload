@@ -1,2 +1,4 @@
 fire
 gitpython
+requests
+python-dotenv
