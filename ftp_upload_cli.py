@@ -41,6 +41,8 @@ def walk_upload(root_folder, sub_folder):
     if not os.path.isdir(root_folder) and not os.path.isdir(sub_folder):
         return
 
+    os.system(ftp_command.format(command='cd ' + ftp_dir + sub_folder + ';mput -P 2 ' + root_folder + '/*;'))
+
     with read_only(cache_directory(open_fs(root_folder))) as home_fs:
         for dir_path in home_fs.walk.dirs(sub_folder, exclude_dirs=["*.git", ".github"]):
             print("Processing", dir_path)
