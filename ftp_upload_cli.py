@@ -7,10 +7,7 @@ from fs import open_fs
 from fs.wrap import read_only, cache_directory
 
 root = 'covid19cubadataactions'
-
-ftp_dir = '/htdocs/testing'
 ftp_command = 'lftp -u {user},{password} -p {port} -e "set ssl:verify-certificate false;{command}exit;" {host}'
-mkdir_str = 'cd ' + ftp_dir + '{folder}' + ' || mkdir -p ' + ftp_dir + '{folder}' + ';cd ' + ftp_dir + '{folder}' + ';'
 
 
 class LeaveMissing(dict):
@@ -33,11 +30,11 @@ def get_last_commit(repo_url, branch):
     return None
 
 
-def mkdir(folder):
-    return mkdir_str.format(folder=folder)
+def mkdir(ftp_dir, folder):
+    return str('cd ' + ftp_dir + '{folder}' + ' || mkdir -p ' + ftp_dir + '{folder}' + ';cd ' + ftp_dir + '{folder}' + ';').format(folder=folder)
 
 
-def walk_upload(root_folder, sub_folder):
+def walk_upload(ftp_dir, root_folder, sub_folder):
     if not os.path.isdir(root_folder) and not os.path.isdir(sub_folder):
         return
 
@@ -47,11 +44,11 @@ def walk_upload(root_folder, sub_folder):
         for dir_path in home_fs.walk.dirs(sub_folder, exclude_dirs=["*.git", ".github"]):
             print("Processing", dir_path)
             entry = root_folder + dir_path
-            os.system(ftp_command.format(command=mkdir(dir_path) + 'mput -P 2 ' + entry + '/*;'))
+            os.system(ftp_command.format(command=mkdir(ftp_dir, dir_path) + 'mput -P 2 ' + entry + '/*;'))
             print("Uploaded", dir_path)
 
 
-def update_branch(branch, upload_root, repo_url):
+def update_branch(branch, ftp_dir, upload_root, repo_url):
     last_commit_file = 'last_commit_' + branch
     last_commit = None
     if os.path.isfile(last_commit_file):
@@ -64,7 +61,7 @@ def update_branch(branch, upload_root, repo_url):
     else:
         os.system('git clone -b {0} --depth=1 {1} {2}'.format(branch, repo_url, root))
         print('Will need to update', remote_commit, last_commit)
-        walk_upload(root, upload_root)
+        walk_upload(ftp_dir, root, upload_root)
 
         with open(last_commit_file, 'w') as file:
             file.write(remote_commit)
@@ -72,12 +69,12 @@ def update_branch(branch, upload_root, repo_url):
     os.system('rm -rf ' + root)
 
 
-def run_update(host, user, password, port=21):
+def run_update(host, user, password, port=21, ftp_dir='/htdocs/testing'):
     global ftp_command
     ftp_command = ftp_command.format_map(LeaveMissing(user=user, password=password, host=host, port=port))
 
-    update_branch('master', '/', 'https://github.com/covid19cubadata/covid19cubadata.github.io.git')
-    update_branch('gh-pages', '/api', 'https://github.com/covid19cuba/covid19cubadata.github.io.git')
+    update_branch('master', ftp_dir, '/', 'https://github.com/covid19cubadata/covid19cubadata.github.io.git')
+    update_branch('gh-pages', ftp_dir, '/api', 'https://github.com/covid19cuba/covid19cubadata.github.io.git')
 
 
 if __name__ == "__main__":
