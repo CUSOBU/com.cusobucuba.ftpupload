@@ -6,7 +6,9 @@ import git
 from fs import open_fs
 from fs.wrap import read_only, cache_directory
 
-root = 'covid19cubadataactions'
+DIRECTORY = os.path.dirname(os.path.realpath(__file__)) + '/'
+
+root = DIRECTORY + 'covid19cubadataactions'
 ftp_command = 'lftp -u {user},{password} -p {port} -e "set ssl:verify-certificate false;{command}exit;" {host}'
 
 
@@ -16,13 +18,14 @@ class LeaveMissing(dict):
 
 
 def get_last_commit(repo_url, branch):
-    if os.path.exists('temp_repo'):
-        os.system('rm -rf temp_repo')
-    r = git.Repo.init('temp_repo')
+    temp_repo = DIRECTORY + 'temp_repo'
+    if os.path.exists(temp_repo):
+        os.system('rm -rf ' + temp_repo)
+    r = git.Repo.init(temp_repo)
     r.create_remote('origin', repo_url)
     res = str(r.git.ls_remote(repo_url)).replace('\t', ' ')
     r.close()
-    os.system('rm -rf temp_repo')
+    os.system('rm -rf ' + temp_repo)
     regex = '(?P<commit>[a-z0-9]+) ' + re.escape("refs/heads/" + branch)
     match_obj = re.search(regex, res)
     if match_obj:
@@ -49,7 +52,7 @@ def walk_upload(ftp_dir, root_folder, sub_folder):
 
 
 def update_branch(branch, ftp_dir, upload_root, repo_url):
-    last_commit_file = 'last_commit_' + branch
+    last_commit_file = DIRECTORY + 'last_commit_' + branch
     last_commit = None
     if os.path.isfile(last_commit_file):
         with open(last_commit_file, 'r') as file:
